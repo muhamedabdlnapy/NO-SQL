@@ -1,0 +1,263 @@
+Neo4j
+Store any kind of data using the following graph concepts:
+---------------------
+Node: Graph data records
+Relationship: Connect nodes (has direction and a type)
+Property: Stores data in key-value pair in nodes and relationships
+Label: Groups nodes and relationships (optional)
+
+Create a Single Node
+--------------
+CREATE ( );     
+CREATE(single);  
+MATCH (n) RETURN n    -- means select all nodes and return all nodes
+CREATE(single) RETURN(single) -- create and return only this single node
+
+
+Create Multiple Nodes
+-----------------------
+CREATE (primary_node), ( secondary_node); 
+MATCH (n) RETURN n
+
+Create a node with a label for node classification
+----------------------------
+CREATE (:scientist) 
+Verify 
+MATCH (n) RETURN n
+
+Create a Node with Multiple Labels
+----------------------------
+CREATE (omar:person:president:scientist)  
+   --  omar is a reference (alias) 
+   -- :person:president:scientist  --> nodes
+
+MATCH (n) RETURN n LIMIT 2
+
+
+Create Node with Properties( the data )
+-----------------------------
+CREATE (Ajeet:Developer{name: "Ajeet Kumar", YOB: 1989, POB: "Mau"})
+   
+Returning the created node
+------------------------------
+CREATE (ee:Person { name: "Emil", from: "Sweden", klout: 99 })
+ee:Person a variable ee and label Person for the new node
+
+CREATE (Sonoo:trainer{name: "Sonoo Jaiswal", YOB: 1987, POB: "Faizabad"}) RETURN Sonoo  
+
+Create Relation
+----------------------
+CREATE (Raul:player{name: "Raul Vinci", YOB: 1973, POB: "Milan"})   
+CREATE (It:Country {name: "Itly"})   
+RETURN Raul, It
+Then Create Relation
+-----------------
+CREATE (Raul)-[r:PLAYER_OF]->(It)  
+RETURN Raul, It 
+          
+Create a Relationship between existing Nodes
+MATCH statement is used to create relationship between the existing Nodes.
+---------------------------------------------
+Create a relationship using MATCH statement.
+MATCH (a:player), (b:Country) WHERE a.name = "Raul Vinci" AND b.name = "Itly"   --get for those two needs then create relation 
+CREATE (a)-[r: FOOTBALLER_OF]->(b)   
+RETURN a,b   
+
+
+Create a Relationship with Label and Properties
+-------------------------------------------
+First create a node "Kohli", having multiple labels
+CREATE (Kohli:person:player)  
+Then create some properties with the same node:
+CREATE (Kohli:player{name: "Virat Kohli", YOB: 1988, POB: "Delhi"})   
+RETURN Kohli   
+Create another node "Ind":
+CREATE (Ind:Country {name: "India"})  
+
+Now create a relationship with label and properties:
+----------------------------------------------------
+MATCH (a:player), (b:Country) WHERE a.name = "Virat Kohli" AND b.name = "India"   
+CREATE (a)-[r:BATSMAN_OF {Matches:5, Avg:90.75}]->(b)                                --  {Matches:5, Avg:90.75} just a description
+RETURN a,b  
+
+
+--Create M nodes with relation ---
+MATCH (ee:Person) WHERE ee.name = "Emil" 
+CREATE (js:Person { name: "Johan", from: "Sweden", learn: "surfing" }),
+(ir:Person { name: "Ian", from: "England", title: "author" }),
+(rvb:Person { name: "Rik", from: "Belgium", pet: "Orval" }),
+(ally:Person { name: "Allison", from: "California", hobby: "surfing" }),
+(ee)-[:KNOWS {since: 2001}]->(js),(ee)-[:KNOWS {rating: 5}]->(ir),
+(js)-[:KNOWS]->(ir),(js)-[:KNOWS]->(rvb),
+(ir)-[:KNOWS]->(js),(ir)-[:KNOWS]->(ally),
+(rvb)-[:KNOWS]->(ally)
+
+MATCH clause to get "Emil" in ee variable
+CREATE clause to create multiple nodes (comma separated) with their labels and properties. Also creates directed relationships (a)-[:Label {key: value}]->(b)
+-----------------------------------------Create relationship between 2 unrelated nodes----------------------------------------
+MATCH (n), (m)
+WHERE n.name = "Allison" AND m.name = "Emil"                -- search in all nodes for Allison and Emil
+CREATE (n)-[:KNOWS]->(m)
+
+---Alternative with MERGE, which ensures that the relationship is created only once
+MATCH (n:User {name: "Allison"}), (m:User {name: "Emil"})
+MERGE (n)-[:KNOWS]->(m)
+
+Creating a complete path/related relation
+------------------------
+CREATE p = (Kohli {name:"Virat Kohli"})-[:TOPSCORRER_OF]->  
+(Ind {name: "India"})-[: WINNER_OF]->(Node3 {CT: "Champions_Trophy"})   
+RETURN p                                                                            #create multiple nodes with multiple relations
+------------------
+
+**Update**
+Update node properties (add new or modify)
+Add new .owns property or modify (if exists)
+---------------------------------
+MATCH (n)
+WHERE n.name = "Rik"
+return n
+
+MATCH (n)
+WHERE n.name = "Rik"
+SET n.owns = "Audi"
+
+---Replace all node properties for the new ones--
+Danger: It will delete all previous properties and create .plays and .age properties
+MATCH (n)
+WHERE n.name = "Rik"
+SET n = {plays: "Piano", age: 23}
+
+MATCH (n)
+WHERE n.plays = "Piano"
+SET n = {plays: "Piano", age: 23}
+
+MATCH (n)
+WHERE n.plays = "Piano"
+return n
+
+---Add new node properties without deleting old ones
+Danger: If .plays or .age properties are already set, it will overwrite them
+MATCH (n)
+WHERE n.name = "Allison"
+return n
+
+MATCH (n)
+WHERE n.name = "Allison"
+SET n += {plays: "Piano", age: 23}
+
+MATCH (n)
+WHERE n.name = "Allison"
+return n
+
+--Add new node property if property not already set
+MATCH (n)
+WHERE n.plays = "Piano" AND NOT (EXISTS (n.likes))      #search for node that has plays='Piano' and does not have property likes
+SET n.likes = "Movies"
+
+MATCH (n)
+WHERE n.name = "Allison"
+return n
+
+
+---Rename a property in all nodes
+MATCH (n)
+WHERE NOT (EXISTS (n.instrument))
+SET n.instrument = n.plays
+REMOVE n.plays 
+
+---Alternative
+
+MATCH (n)
+WHERE n.instrument is null
+SET n.instrument = n.plays
+REMOVE n.plays
+
+--Add label to existing node
+--Adds the :Food label to nodes id<7> and id<8>
+
+MATCH (n)
+WHERE id(n) IN [7, 8]
+SET n:Food
+
+--Creates the node if not exists and updates (or creates) a property
+MERGE (n:testme {name: "Hanem"})
+SET n.owns = "Audi"
+
+---Delete nodes
+To delete a node (p.e. id<5>),
+--first we need to delete its relationships. Then, the node can be deleted
+
+MATCH (n)-[r]-()
+WHERE id(n) = 5
+DELETE r, n
+
+--To delete multiple nodes (must have their relationships previously deleted)
+
+MATCH (n)
+WHERE id(n) IN [1, 2, 3]
+DELETE n
+
+--Delete a label from all nodes
+--Deletes the :Person label from all nodes
+
+MATCH (n)
+REMOVE n:Person
+
+--Delete a label from nodes with specific labels
+--Deletes the :Person label from nodes with :Food and :Person labels
+
+MATCH (n)
+WHERE n:Developer:Food
+REMOVE n:Food
+
+--Delete multiple labels from nodes
+--Deletes the :Food and :Person labels from nodes which have both labels
+
+MATCH (n)
+WHERE n:Food:Person
+REMOVE n:Food:Person
+Danger: Deletes the :Food and :Person labels from nodes which have :Food or :Person or :Food:Person labels
+
+MATCH (n)
+REMOVE n:Food:Person
+
+--Delete entire database
+MATCH (n)
+OPTIONAL MATCH (n)-[r]-()
+DELETE n, r
+
+
+---Other clauses
+--Count
+--Count all nodes
+MATCH (n)
+RETURN count(n)
+
+--Count all relationships
+MATCH ()-->()
+RETURN count(*);
+
+--Limit
+Returns up to 2 nodes (and their relationships) where there's a property from with "Sweden" value
+
+MATCH (a:Person)
+WHERE a.from = "Sweden"
+RETURN a
+LIMIT 2
+
+
+Create unique property constraint
+Make .name property unique on nodes with :Person label
+
+CREATE CONSTRAINT ON (n:Person)
+ASSERT n.name IS UNIQUE
+
+Drop unique property constraint
+Make .name property unique on nodes with :Person label
+
+DROP CONSTRAINT ON (n:Person)
+ASSERT n.name IS UNIQUE
+
+
+
