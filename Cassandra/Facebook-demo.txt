@@ -1,0 +1,105 @@
+Instant Cassandra Query Language
+--describe and list keyspace
+--At any time, you can DESCRIBE the keyspace, use the following command to do that:
+--we'll be building a data model for a Facebook-like application.
+--it will store user profile and their social connections, their posts (only text ones for simplicity) and a timeline.
+*********************************************
+
+--Creating keyspace for facebook
+CREATE KEYSPACE facebook WITH replication = {'class':'SimpleStrategy','replication_factor':1};
+
+USE facebook;
+DESCRIBE KEYSPACE facebook;
+--creating tables
+CREATE TABLE UserProfiles(email_id text,password text,name text,age int,profile_picture blob,PRIMARY KEY(email_id));
+
+
+---insert data
+INSERT INTO UserProfiles(email_id, password, name, age, profile_picture)
+  VALUES('john.smith@example.com','p4ssw0rd','John Smith',32,0x8e37);
+INSERT INTO UserProfiles(email_id, password, name, age, profile_picture)
+  VALUES('david.bergin@example.com','guess1t','David Bergin',42,0xc9f1);
+INSERT INTO UserProfiles(email_id, password, name, age, profile_picture)
+  VALUES('angela.thomas@example.com','s3cr3t','Angela Thomas',35,0xe8a0);
+INSERT INTO UserProfiles(email_id, password, name, age, profile_picture)
+  VALUES('sarah.miller@example.com','p4hn4H1','Sarah Miller',24,0x5fa1);
+
+--update
+UPDATE UserProfiles SET age=20, profile_picture=0x5d1b
+  WHERE email_id = 'angela.thomas@example.com';
+
+--view rows 
+SELECT * FROM UserProfiles;
+SELECT * FROM UserProfiles WHERE email_id = 'angela.thomas@example.com';
+
+
+--search by name 
+SELECT * FROM UserProfiles WHERE name='John Smith';
+
+--create index
+CREATE INDEX ON UserProfiles(name);
+>describe userProfiles
+
+--create more index
+CREATE INDEX ON UserProfiles(age);
+SELECT name, age FROM UserProfiles WHERE age > 30 AND name='John Smith' ALLOW FILTERING;
+
+--Let's add a List column to UserProfiles and update data:
+ALTER TABLE UserProfiles ADD places_lived list<text>;
+
+--inser values
+UPDATE UserProfiles SET places_lived = ['New York','Connecticut','London']WHERE email_id='john.smith@example.com';
+UPDATE UserProfiles SET places_lived = ['New Delhi','Paris']WHERE email_id='david.bergin@example.com';
+UPDATE UserProfiles SET places_lived = ['Moscow']WHERE email_id='angela.thomas@example.com';
+UPDATE UserProfiles SET places_lived = ['Perth','Berlin','Wellington','Dubai'] WHERE email_id='sarah.miller@example.com';
+
+SELECT email_id,name, places_lived FROM UserProfiles;
+
+
+--Storing facebook posts
+--create table
+
+CREATE TABLE Posts (post_id timeuuid,body text,
+  device text,posted_at timestamp,liked_by set<text>,
+  commented_by map<text, text>,PRIMARY KEY(post_id));
+
+CREATE TABLE Posts (post_id timeuuid,body text,
+  device text,posted_at timestamp,liked_by set<text>,
+  commented_by map<text, text>,PRIMARY KEY((post_id),device));
+
+
+--add record
+
+INSERT INTO Posts(post_id, body, device, posted_at)
+   VALUES (17cd4be0-eb1f-11e2-8f75-55116e6864a0,
+  'My first post','Web','2013-07-01 06:32:47');
+INSERT INTO Posts(post_id, body, device, posted_at)
+   VALUES (17d86f70-eb1f-11e2-8f75-55116e6864a0,
+  'My second post','iPhone','2013-07-03 13:16:31');
+INSERT INTO Posts(post_id, body, device, posted_at)
+   VALUES (18e99150-eb1f-11e2-8f75-55116e6864a0,
+  'My third post','Android','2013-07-03 11:45:10');
+
+--selection 
+SELECT post_id,body,device FROM Posts;
+
+--Updating rows with likes and comments is done using the following command:
+
+UPDATE Posts SET liked_by={'john.smith@example.com','david.bergin@example.com'}WHERE post_id=17cd4be0-eb1f-11e2-8f75-55116e6864a0;
+UPDATE Posts SET liked_by={'john.smith@example.com'}WHERE post_id=17d86f70-eb1f-11e2-8f75-55116e6864a0;
+UPDATE Posts SET commented_by={'john.smith@example.com':'awesome post!','david.bergin@example.com':'really?'}WHERE post_id=17cd4be0-eb1f-11e2-8f75-55116e6864a0;
+UPDATE Posts SET commented_by={'john.smith@example.com':'Hahaha'} WHERE post_id=17d86f70-eb1f-11e2-8f75-55116e6864a0;
+
+SELECT body,liked_by FROM Posts;
+SELECT body, commented_by FROM Posts;
+
+--we would create a table dedicated for Timeline:
+
+CREATE TABLE Timeline(email_id text,post_id timeuuid,
+  name text,body text,device text,posted_at timestamp,
+  liked_by set<text>,commented_by map<text,text>
+  ,PRIMARY KEY(email_id,post_id));
+
+
+
+

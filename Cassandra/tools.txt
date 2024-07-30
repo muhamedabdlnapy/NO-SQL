@@ -1,0 +1,9 @@
+Cassandra installation steps for windows
+Click on " https://phoenixnap.com/kb/install-cassandra-on-windows "
+
+Cassandra installation for ubuntu click on "  https://phoenixnap.com/kb/install-cassandra-on-ubuntu "
+
+Cassandra online editor "  https://katacoda.com/datastax/courses/cassandra-try-it-out/try-cql "
+
+Lecture Demo "  cassandra.txt " and " facebook-demo.txt  " 
+" https://subscription.packtpub.com/book/networking-and-servers/9781783282715/1/ch01lvl1sec05/quick-start-running-cql-queries "
